@@ -1,0 +1,44 @@
+package:
+  name: metagraph-numba
+  version: {{ GIT_DESCRIBE_TAG }}
+
+source:
+  path: ..
+
+build:
+  number: {{ GIT_DESCRIBE_NUMBER|int }}
+  string: py_h{{ PKG_HASH }}_{{GIT_DESCRIBE_HASH}}_{{ GIT_DESCRIBE_NUMBER }}
+  noarch: python
+  script: "{{ PYTHON }} -m pip install . -vv"
+
+requirements:
+  host:
+    - python
+    - setuptools
+    - metagraph
+
+  run:
+    - python
+    - setuptools
+    - metagraph
+    - numba
+
+test:
+  requires:
+    - pytest
+    - pytest-cov
+    - coverage
+    - black
+
+  commands:
+    - pytest --pyargs metagraph_numba.tests
+
+about:
+  home: https://github.com/ContinuumIO/metagraph-numba
+  license: Apache 2.0
+  license_family: Apache
+  license_file: LICENSE
+  summary: 'Metagraph plugin for the Numba compiler'
+  description: |
+      Plugin for metagraph allowing algorithms to be compiled with Numba
+  dev_url: https://github.com/ContinuumIO/metagraph-numba

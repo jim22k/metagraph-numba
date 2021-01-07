@@ -1,0 +1,47 @@
+name: Daily Checkup
+
+on:
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    # Run daily at 3:35am UTC
+    - cron: '35 3 * * *'
+
+env:
+  PYVER: 3.8
+  CHANNELS: defaults -c metagraph/label/dev -c conda-forge
+
+jobs:
+  daily_check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup conda env
+        run: |
+          source "$CONDA/etc/profile.d/conda.sh"
+          conda config --set always_yes yes --set changeps1 no
+          conda update -q conda
+          conda create -n mg python=${{ env.PYVER }} pytest coverage pytest-cov
+          conda activate mg
+          # Install package using latest "dev" versions from metagraph channel
+          conda install -c ${{ env.CHANNELS }} metagraph-numba
+          conda list
+      - name: Pytest
+        run: |
+          source "$CONDA/etc/profile.d/conda.sh"
+          conda activate mg
+          pytest --pyargs metagraph_numba
+          python -m metagraph.tests
+          python -m metagraph.tests --dask
+      - name: Notify for Failure
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              attachments: [{
+                color: 'danger',
+                text: ':x: Failure\nDaily health check failed for *<https://github.com/metagraph-dev/metagraph-igraph/actions?query=workflow%3A%22Daily+Checkup%22|metagraph-igraph>*'
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
