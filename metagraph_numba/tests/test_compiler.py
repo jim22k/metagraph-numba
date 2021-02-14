@@ -5,7 +5,12 @@ from metagraph.core.resolver import Resolver
 from metagraph.core.dask.resolver import DaskResolver
 import numpy as np
 from metagraph.tests.util import default_plugin_resolver
-from metagraph_numba.compiler import NumbaCompiler, SymbolTable, construct_call_wrapper_text, compile_wrapper
+from metagraph_numba.compiler import (
+    NumbaCompiler,
+    SymbolTable,
+    construct_call_wrapper_text,
+    compile_wrapper,
+)
 
 
 def test_register(default_plugin_resolver):
@@ -80,7 +85,7 @@ def test_construct_call_wrapper_text(ex1):
         output_key="algo1",
     )
 
-    expected_text = '''\
+    expected_text = """\
 def subgraph0(var0, var1):
     global const0
     global const1
@@ -91,12 +96,12 @@ def subgraph0(var0, var1):
     ret1 = func1(ret0, const1)
 
     return ret1
-'''
+"""
     expected_globals = {
-        'const0': 2,
-        'const1': 5,
-        'func0': algo0,
-        'func1': algo1,
+        "const0": 2,
+        "const1": 5,
+        "func0": algo0,
+        "func1": algo1,
     }
     assert expected_text == text
     assert expected_globals == wrapper_globals
@@ -112,9 +117,10 @@ def test_compile_wrapper(ex1):
         output_key="algo1",
     )
 
-    wrapper = compile_wrapper('subgraph0', text, wrapper_globals)
+    wrapper = compile_wrapper("subgraph0", text, wrapper_globals)
     for i0, i1 in [(10, 6), (12, 18), (-5, 2)]:
         assert wrapper(i0, i1) == (((i0 - i1) * 2) + 5)
+
 
 def test_compile_subgraph(dres):
     a = np.arange(100)
@@ -153,7 +159,9 @@ def res():
         pass
 
     @concrete_algorithm("testing.add", compiler="numba")
-    def compiled_add(a: NumpyVectorType, b: NumpyVectorType) -> NumpyVectorType:  # pragma: no cover
+    def compiled_add(
+        a: NumpyVectorType, b: NumpyVectorType
+    ) -> NumpyVectorType:  # pragma: no cover
         return a + b
 
     @abstract_algorithm("testing.scale")
@@ -161,7 +169,9 @@ def res():
         pass
 
     @concrete_algorithm("testing.scale", compiler="numba")
-    def compiled_scale(a: NumpyVectorType, scale: float) -> NumpyVectorType:  # pragma: no cover
+    def compiled_scale(
+        a: NumpyVectorType, scale: float
+    ) -> NumpyVectorType:  # pragma: no cover
         return a * scale
 
     @abstract_algorithm("testing.offset")
@@ -169,7 +179,9 @@ def res():
         pass
 
     @concrete_algorithm("testing.offset", compiler="identity_comp")
-    def compiled_offset(a: NumpyVectorType, *, offset: float) -> NumpyVectorType:  # pragma: no cover
+    def compiled_offset(
+        a: NumpyVectorType, *, offset: float
+    ) -> NumpyVectorType:  # pragma: no cover
         return a + offset
 
     registry = PluginRegistry("test_subgraphs_plugin")

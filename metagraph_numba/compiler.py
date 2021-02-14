@@ -92,7 +92,7 @@ def construct_call_wrapper_text(
     input_keys: List[Hashable],
     execute_keys: List[Hashable],
     output_key: Hashable,
-)->Tuple[str, Dict[str, Any]]:
+) -> Tuple[str, Dict[str, Any]]:
 
     wrapper_globals = symbol_table.const_sym_to_value.copy()
     wrapper_globals.update(symbol_table.func_sym_to_func)
