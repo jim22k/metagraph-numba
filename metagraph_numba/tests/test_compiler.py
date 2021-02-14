@@ -3,6 +3,10 @@ import metagraph as mg
 from metagraph import abstract_algorithm, concrete_algorithm, PluginRegistry
 from metagraph.core.resolver import Resolver
 from metagraph.core.dask.resolver import DaskResolver
+from metagraph.core.plugin import CompileError
+from dask import delayed
+
+
 import numpy as np
 from metagraph.tests.util import default_plugin_resolver
 from metagraph_numba.compiler import (
@@ -128,10 +132,33 @@ def test_compile_subgraph(dres):
     x = scale_func(a, 2.0)
     y = scale_func(x, 3.0)
     z = scale_func(y, 4.0)
-    ans = dres.algos.testing.add(y, z)
+    compiler = dres.compilers["numba"]
 
-    expected = (a * 2.0 * 3.0 * 4.0) + (a * 2.0 * 3.0)
-    ret = ans.compute()
+    jit_func = compiler.compile_subgraph(z.__dask_graph__(), [], z.key)
+
+    expected = a * 2.0 * 3.0 * 4.0
+    ret = jit_func()
+    np.testing.assert_array_equal(ret, expected)
+
+
+def test_compile_subgraph_kwargs_error(dres):
+    a = np.arange(100)
+    x = dres.algos.testing.offset(a, offset=4.0)
+    compiler = dres.compilers["numba"]
+
+    with pytest.raises(CompileError, match="offset"):
+        jit_func = compiler.compile_subgraph(x.__dask_graph__(), [], x.key)
+
+
+def test_compute(dres):
+    a = np.arange(100)
+    scale_func = dres.algos.testing.scale
+    x = scale_func(a, 2.0)
+    y = scale_func(x, 3.0)
+    z = scale_func(y, 4.0)
+
+    expected = a * 2.0 * 3.0 * 4.0
+    ret = z.compute()
     np.testing.assert_array_equal(ret, expected)
 
 

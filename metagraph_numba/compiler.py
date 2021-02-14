@@ -148,15 +148,20 @@ class NumbaCompiler(Compiler):
 
     def compile_subgraph(self, subgraph: Dict, inputs: List[str], output: str):
         tbl = SymbolTable()
+        toposort_keys = list(toposort(subgraph))
 
         # register the inputs as variables
         for key in inputs:
             tbl.register_var(key)
 
         # register each function in the subgraph
-        for key, task in subgraph.items():
+        for key in toposort_keys:
+            task = subgraph[key]
             # all metagraph tasks are in (func, args, kwargs) format
             delayed_algo, args, kwargs = task
+            if isinstance(kwargs, tuple):
+                # FIXME: why are dictionaries represented this way in the DAG?
+                kwargs = kwargs[0](kwargs[1])
             if len(kwargs) != 0:
                 raise CompileError(
                     "NumbaCompiler only supports functions bound kwargs.\n"
@@ -165,11 +170,10 @@ class NumbaCompiler(Compiler):
             jit_func = numba.jit(inline="always")(delayed_algo.algo.func)
             tbl.register_func(key, jit_func, args)
 
-        toposort_keys = list(toposort(subgraph))
         subgraph_wrapper_name = "subgraph" + str(self._subgraph_count)
         self._subgraph_count += 1
         wrapper_text, wrapper_globals = construct_call_wrapper_text(
-            name=subgraph_wrapper_name,
+            wrapper_name=subgraph_wrapper_name,
             symbol_table=tbl,
             input_keys=inputs,
             execute_keys=toposort_keys,
