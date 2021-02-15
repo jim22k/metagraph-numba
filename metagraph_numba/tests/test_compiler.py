@@ -141,6 +141,35 @@ def test_compile_subgraph(dres):
     np.testing.assert_array_equal(ret, expected)
 
 
+def test_compile_subgraph_with_input(dres):
+    from metagraph.plugins.numpy.types import NumpyVectorType
+    from metagraph.plugins.graphblas.types import GrblasVectorType
+
+    a = np.arange(100)
+    # insert unnecesary translate to create "input" task for later
+    a_translate = dres.translate(a, dst_type=GrblasVectorType)
+    a_back = dres.translate(a_translate, dst_type=NumpyVectorType)
+
+    scale_func = dres.algos.testing.scale
+    x = scale_func(a_back, 2.0)
+    y = scale_func(x, 3.0)
+    z = scale_func(y, 4.0)
+
+    subgraph = z.__dask_graph__().copy()
+    assert len(subgraph) == 5
+    # remove the translate tasks manually to make our subgraph
+    del subgraph[a_translate.key]
+    del subgraph[a_back.key]
+    assert len(subgraph) == 3
+
+    compiler = dres.compilers["numba"]
+    jit_func = compiler.compile_subgraph(subgraph, [a_back.key], z.key)
+
+    expected = a * 2.0 * 3.0 * 4.0
+    ret = jit_func(a)  # fused func expects one input, corresponding to a_back
+    np.testing.assert_array_equal(ret, expected)
+
+
 def test_compile_subgraph_kwargs_error(dres):
     a = np.arange(100)
     x = dres.algos.testing.offset(a, offset=4.0)
