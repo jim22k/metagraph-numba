@@ -73,7 +73,7 @@ jobs:
           source "$CONDA/etc/profile.d/conda.sh"
           conda config --set always_yes yes --set changeps1 no
           conda update -q conda
-          conda create -n mg python=${{ matrix.pyver }} pytest coverage pytest-cov
+          conda create -n mg python=${{ matrix.pyver }} pytest coverage pytest-cov metagraph
           conda activate mg
           # Install built_package
           BUILT_PKG=`ls ./artifact_storage | head -1`
@@ -88,8 +88,6 @@ jobs:
           source "$CONDA/etc/profile.d/conda.sh"
           conda activate mg
           pytest --pyargs metagraph_numba
-          python -m metagraph.tests
-          python -m metagraph.tests --dask
 
   dev_deploy:
     runs-on: ubuntu-latest
