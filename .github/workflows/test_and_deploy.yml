@@ -73,7 +73,7 @@ jobs:
           source "$CONDA/etc/profile.d/conda.sh"
           conda config --set always_yes yes --set changeps1 no
           conda update -q conda
-          conda create -n mg python=${{ matrix.pyver }} pytest coverage pytest-cov metagraph
+          conda create -n mg python=${{ matrix.pyver }} pytest coverage pytest-cov
           conda activate mg
           # Install built_package
           BUILT_PKG=`ls ./artifact_storage | head -1`
@@ -81,7 +81,7 @@ jobs:
           conda list
           # Install dependencies listed in built package
           # (This is a workaround because conda does not install dependencies for local file installs)
-          conda update -c ${{ env.CHANNELS }} metagraph-numba
+          conda update -c ${{ env.CHANNELS }} metagraph-numba scikit-learn
           conda list
       - name: Pytest
         run: |
