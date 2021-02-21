@@ -10,7 +10,8 @@ dependencies:
   - coverage
   - pytest
   - pytest-cov
-  - black
+  - black=19.10b0
+  - scikit-learn
 
 # dependencies (so setup.py develop doesn't pip install them)
   - metagraph
