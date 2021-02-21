@@ -7,27 +7,34 @@ This compiler plugin assumes that concrete algorithm implementations are
 * The decorated Python function is compilable by Numba.
 * The input and output data types can be boxed/unboxed by Numba automatically.
 
-To created a fused multiple tasks into a subgraph, all of the individual task
-functions are wrapped in the Numba @jit decorator with inlining turned on. A
-wrapper function that calls the tasks in the correct order is generated. Task
-function arguments are sorted into one of three categories using the
+To fuse multiple tasks from the subgraph into a single function, all of the
+individual task functions are first wrapped in the Numba @jit decorator with
+inlining enabled. Then a wrapper function that calls each of the tasks in the
+correct order is generated.  The required inlining of the task functions into
+the wrapper should give the compiler the most opportunity for loop fusion and
+code optimization.
+
+Task function arguments are sorted into one of three categories using the
 SymbolTable class:
 
 * Inputs passed from tasks outside the subgraph ("var0", "var1", etc)
 * Values known at compile time ("const0", "const1", etc)
 * Results from other tasks in the subgraph ("ret0", "ret1", etc)
 
-The subgraph is walked to build the symbol table, then the wrapper function is
-generated as text (since Python doesn't have a better way to do this).
-Finally, the function is materialized by using exec() and populating the
-globals with the constants and functions that the wrapper references.  Numba
-will capture these global values when it finally compiles the function.
+The tasks in the subgraph are topologically sorted based on their dependencies
+and inspected to build the symbol table.  The wrapper function is then
+generated as text (for now) since Python doesn't have an easier way to
+programmatically generate a function.  Finally, the function is materialized
+in the interpreter by using exec() and populating the globals with the named
+constants and functions that the wrapper references.  Numba will capture these
+global values when compiling the function.
 
 Note that while the fused function is generated ahead of time, the actual
-Numba compilation is not triggered until the fused task is executed by Dask at
-some point in the future.  This is an implementation convenience, as
-generating a full Numba type signature to do ahead-of-time compilation is a
-big pain.
+Numba compilation (Python bytecode->machine code) is not triggered until the
+fused task is executed by Dask at some point in the future.  This is an
+implementation convenience, as ahead-of-time compilation would require
+generating a detailed type signature for the function, which is difficult and
+error prone.
 """
 
 import numba
