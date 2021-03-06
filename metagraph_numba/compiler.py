@@ -111,7 +111,9 @@ class SymbolTable:
 
     def register_var(self, key, *, type=None):
         """Register an external values associated with `key`.
-        
+
+        A type can optionally be registered for the value.
+
         Returns uniquely generated symbol name.
         """
         var_sym = self.next_var()
@@ -123,6 +125,8 @@ class SymbolTable:
 
     def register_const(self, value, *, type=None):
         """Register a Python object as a compile time constant.
+
+        A type can optionally be registered for the value.
 
         Returns uniquely generated symbol name.
         """
@@ -164,6 +168,11 @@ class SymbolTable:
         symbols (if they are known Dask keys), or the argument value will be
         stored and a newly generated const symbol recorded in the argument
         list.
+
+        An optional list of argument types and a return type can be set.  The
+        argument types are only used to determine the types of constant args.
+        It is assumed that other arguments have had types set by previous
+        register_* calls.
 
         Note that function calls must be registered in topologically sorted
         dependency order, or the key discovery will not work.
