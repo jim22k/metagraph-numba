@@ -54,7 +54,6 @@ class SymbolTable:
     not necessarily valid Python identifiers.  Also, Dask tasks reference
     values and other tasks, which need to be mapped to identifiers as well.
 
-
     The naming convention for attributes is as follows:
       - `sym`: A symbol name that is a valid Python identifier.  This class
         uses names like `constN`, `varN`, `funcN`, and `retN`.
@@ -69,6 +68,9 @@ class SymbolTable:
     The mappings in this class typically populated by calling register_var()
     and register_func().  See docstrings below for more details.
 
+    Value symbols (`ret`, `var`, `const`) can have a type optionally
+    associated with them.
+
     Note that automatically generated symbol names are only guaranteed to be
     unique for this instance of the symbol table.  Other symbol tables will
     collide with this one.
@@ -82,6 +84,7 @@ class SymbolTable:
     func_sym_to_func: Dict[str, Callable] = field(default_factory=dict)
     func_sym_to_ret_sym: Dict[str, str] = field(default_factory=dict)
     func_sym_to_args_sym: Dict[str, Tuple[str]] = field(default_factory=dict)
+    sym_to_type: Dict[str, Any] = field(default_factory=dict)
 
     var_counter: int = 0
     const_counter: int = 0
@@ -106,7 +109,7 @@ class SymbolTable:
         setattr(self, counter, value + 1)
         return f"{prefix}{value}"
 
-    def register_var(self, key):
+    def register_var(self, key, *, type=None):
         """Register an external values associated with `key`.
         
         Returns uniquely generated symbol name.
@@ -114,15 +117,19 @@ class SymbolTable:
         var_sym = self.next_var()
         self.var_sym_to_key[var_sym] = key
         self.var_key_to_sym[key] = var_sym
+        if type is not None:
+            self.sym_to_type[var_sym] = type
         return var_sym
 
-    def register_const(self, value):
+    def register_const(self, value, *, type=None):
         """Register a Python object as a compile time constant.
 
         Returns uniquely generated symbol name.
         """
         const_sym = self.next_const()
         self.const_sym_to_value[const_sym] = value
+        if type is not None:
+            self.sym_to_type[const_sym] = type
         return const_sym
 
     def find_symbol(self, arg):
@@ -148,7 +155,7 @@ class SymbolTable:
 
         # return None means no symbol found
 
-    def register_func(self, key, func, args):
+    def register_func(self, key, func, args, *, arg_types=None, ret_type=None):
         """Register a function call with return value associated with key and
         the given argument list.
 
@@ -167,12 +174,18 @@ class SymbolTable:
         self.func_key_to_sym[key] = func_sym
         self.func_sym_to_func[func_sym] = func
         self.func_sym_to_ret_sym[func_sym] = ret_sym
+        if ret_type is not None:
+            self.sym_to_type[ret_sym] = ret_type
 
         arg_sym_list = []
-        for arg in args:
+        for iarg, arg in enumerate(args):
             arg_sym = self.find_symbol(arg)
             if arg_sym is None:
-                arg_sym = self.register_const(arg)
+                if arg_types is not None:
+                    arg_type = arg_types[iarg]
+                else:
+                    arg_type = None
+                arg_sym = self.register_const(arg, type=arg_type)
             arg_sym_list.append(arg_sym)
 
         self.func_sym_to_args_sym[func_sym] = tuple(arg_sym_list)
