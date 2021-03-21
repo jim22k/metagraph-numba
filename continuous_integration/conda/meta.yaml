@@ -29,7 +29,6 @@ test:
 
   commands:
     - pytest --pyargs metagraph_numba.tests
-    - pytest --pyargs metagraph.tests
 
 about:
   home: https://github.com/metagraph-dev/metagraph-numba
