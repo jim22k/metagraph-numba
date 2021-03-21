@@ -29,8 +29,6 @@ jobs:
           source "$CONDA/etc/profile.d/conda.sh"
           conda activate mg
           pytest --pyargs metagraph_numba
-          python -m metagraph.tests
-          python -m metagraph.tests --dask
       - name: Notify for Failure
         if: failure()
         uses: 8398a7/action-slack@v3
