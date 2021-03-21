@@ -26,6 +26,7 @@ test:
     - pytest-cov
     - coverage
     - scikit-learn  # for metagraph
+    - grblas # for metagraph
 
   commands:
     - pytest --pyargs metagraph_numba.tests
