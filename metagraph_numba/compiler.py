@@ -189,12 +189,24 @@ class SymbolTable:
         arg_sym_list = []
         for iarg, arg in enumerate(args):
             arg_sym = self.find_symbol(arg)
+
             if arg_sym is None:
+                # arg is not an input var, so constant
                 if arg_types is not None:
                     arg_type = arg_types[iarg]
                 else:
                     arg_type = None
                 arg_sym = self.register_const(arg, type=arg_type)
+            else:
+                # arg is an input var
+                if arg_types is not None:
+                    if arg_sym not in self.sym_to_type:
+                        self.sym_to_type[arg_sym] = arg_types[iarg]
+                    elif self.sym_to_type[arg_sym] != arg_types[iarg]:
+                        raise TypeError(
+                            f"Type inconsistency with {arg}:{arg_types[iarg]}, previously defined as {self.sym_to_type[arg_sym]}"
+                        )
+
             arg_sym_list.append(arg_sym)
 
         self.func_sym_to_args_sym[func_sym] = tuple(arg_sym_list)
