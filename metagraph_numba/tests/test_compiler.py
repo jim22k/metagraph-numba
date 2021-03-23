@@ -79,6 +79,91 @@ def test_symbol_table_register_func(ex1):
     return tbl
 
 
+def test_symbol_table_register_types():
+    tbl = SymbolTable()
+
+    tbl.register_var("input0", type="tensor<?xf32>")
+    tbl.register_var("input1", type="tensor<?xf64>")
+
+    algo0 = lambda x, y, z: (x - y) * z
+    algo1 = lambda x, y: x + y
+    tbl.register_func(
+        "algo0",
+        algo0,
+        ["input0", "input1", 2],
+        arg_types=["tensor<?xf32>", "tensor<?xf64>", "i64"],
+        ret_type="tensor<?x?xf32>",
+    )
+    tbl.register_func(
+        "algo1",
+        algo1,
+        ["algo0", 5],
+        arg_types=["tensor<?x?xf32>", "i32"],
+        ret_type="tensor<?xf32>",
+    )
+
+    assert tbl.sym_to_type == dict(
+        var0="tensor<?xf32>",
+        var1="tensor<?xf64>",
+        const0="i64",
+        const1="i32",
+        ret0="tensor<?x?xf32>",
+        ret1="tensor<?xf32>",
+    )
+
+
+def test_symbol_table_register_types_infer_var_type():
+    tbl = SymbolTable()
+
+    # Type should be picked up from arg signature
+    tbl.register_var("input0")
+    tbl.register_var("input1")
+
+    algo0 = lambda x, y, z: (x - y) * z
+    algo1 = lambda x, y: x + y
+    tbl.register_func(
+        "algo0",
+        algo0,
+        ["input0", "input1", 2],
+        arg_types=["tensor<?xf32>", "tensor<?xf64>", "i64"],
+        ret_type="tensor<?x?xf32>",
+    )
+
+    assert tbl.sym_to_type == dict(
+        var0="tensor<?xf32>",
+        var1="tensor<?xf64>",
+        const0="i64",
+        ret0="tensor<?x?xf32>",
+    )
+
+
+def test_symbol_table_register_types_infer_var_type_collison():
+    tbl = SymbolTable()
+
+    # Type should be picked up from arg signature
+    tbl.register_var("input0")
+    tbl.register_var("input1")
+
+    algo0 = lambda x, y, z: (x - y) * z
+    algo1 = lambda x, y: x + y
+    tbl.register_func(
+        "algo0",
+        algo0,
+        ["input0", "input1", 2],
+        arg_types=["tensor<?xf32>", "tensor<?xf64>", "i64"],
+        ret_type="tensor<?x?xf32>",
+    )
+
+    with pytest.raises(TypeError, match="input1"):
+        tbl.register_func(
+            "algo1",
+            algo1,
+            ["algo0", "input1"],
+            arg_types=["tensor<?x?xf32>", "i32"],
+            ret_type="tensor<?xf32>",
+        )
+
+
 def test_construct_call_wrapper_text(ex1):
     tbl, (algo0, algo1) = ex1
     text, wrapper_globals = construct_call_wrapper_text(
