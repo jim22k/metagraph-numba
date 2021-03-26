@@ -228,11 +228,11 @@ def construct_call_wrapper_text(
     given.  Functions will be executed in the order provided by
     `execute_keys`, and the function will return the result associated with
     `output_key`.  All tasks and inputs need to be recorded in the provided
-    `symbol_table` before calling this function.  
+    `symbol_table` before calling this function.
 
     Because constants and function definitions cannot be serialized into the
     wrapper source in general, the wrapper will also indicate all of those
-    symbols are globals using the `global` statement.  When using exec() to 
+    symbols are globals using the `global` statement.  When using exec() to
     parse the wrapper source, the const and func values will need to be
     put into the globals dict passed to exec().
 
@@ -304,7 +304,7 @@ class NumbaCompiler(Compiler):
 
     def compile_algorithm(self, algo, literals):
         """Wrap a single function for JIT compilation and execution.
-        
+
         literals is not used for anything currently
         """
         return numba.jit(algo.func)

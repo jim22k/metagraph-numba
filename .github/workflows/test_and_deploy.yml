@@ -17,30 +17,30 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Setup conda env
+      - name: Create env
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          activate-environment: mg
+          environment-file: continuous_integration/environment.yml
+      - name: Update env
         run: |
-          source "$CONDA/etc/profile.d/conda.sh"
-          conda config --set always_yes yes --set changeps1 no
-          conda update -q conda
-          conda info -a
           conda install -q conda-build
-          conda env create -f continuous_integration/environment-${{ env.MAIN_PYVER }}.yml
-          conda activate mg
           pip install -e .
       - name: Lint with Black
         run: |
-          source "$CONDA/etc/profile.d/conda.sh"
-          conda activate mg
           black --version
           black metagraph_numba *.py --check --diff
       - name: Conda Build
         run: |
-          source "$CONDA/etc/profile.d/conda.sh"
           conda build -c ${{ env.CHANNELS }} --python ${{ env.MAIN_PYVER }} continuous_integration/conda
           # This doesn't rebuild, but simply computes the name of the file that was previously built
           OUTPUT=$(conda build --output -c ${{ env.CHANNELS }} --python ${{ env.MAIN_PYVER }} continuous_integration/conda)
@@ -61,19 +61,23 @@ jobs:
       matrix:
         pyver:
           - 3.8
+    defaults:
+      run:
+        shell: bash -l {0}
     steps:
       - name: Download build artifact
         uses: actions/download-artifact@v2
         with:
           name: built_package
           path: ./artifact_storage
-      - name: Setup conda env
+      - name: Create env
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          python-version: ${{ matrix.pyver }}
+      - name: Update env
         run: |
-          source "$CONDA/etc/profile.d/conda.sh"
-          conda config --set always_yes yes --set changeps1 no
-          conda update -q conda
-          conda create -n mg python=${{ matrix.pyver }} pytest coverage pytest-cov scikit-learn
-          conda activate mg
+          conda install -c ${{ env.CHANNELS }} metagraph-dev
           # Install built_package
           BUILT_PKG=`ls ./artifact_storage | head -1`
           conda install ./artifact_storage/$BUILT_PKG
@@ -84,8 +88,6 @@ jobs:
           conda list
       - name: Pytest
         run: |
-          source "$CONDA/etc/profile.d/conda.sh"
-          conda activate mg
           pytest --pyargs metagraph_numba
 
   dev_deploy:
