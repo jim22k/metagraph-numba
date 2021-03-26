@@ -18,15 +18,11 @@ requirements:
   run:
     - python
     - numba
-    - metagraph >=0.2.4
+    - metagraph >=0.2.5
 
 test:
   requires:
-    - pytest
-    - pytest-cov
-    - coverage
-    - scikit-learn  # for metagraph
-    - grblas # for metagraph
+    - metagraph-dev
 
   commands:
     - pytest --pyargs metagraph_numba.tests

@@ -13,21 +13,22 @@ env:
 jobs:
   daily_check:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
     steps:
-      - name: Setup conda env
+      - name: Create env
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          python-version: ${{ env.PYVER }}
+      - name: Update env
         run: |
-          source "$CONDA/etc/profile.d/conda.sh"
-          conda config --set always_yes yes --set changeps1 no
-          conda update -q conda
-          conda create -n mg python=${{ env.PYVER }} pytest coverage pytest-cov
-          conda activate mg
           # Install package using latest "dev" versions from metagraph channel
-          conda install -c ${{ env.CHANNELS }} metagraph-numba
+          conda install -c ${{ env.CHANNELS }} metagraph-numba metagraph-dev
           conda list
       - name: Pytest
         run: |
-          source "$CONDA/etc/profile.d/conda.sh"
-          conda activate mg
           pytest --pyargs metagraph_numba
       - name: Notify for Failure
         if: failure()
@@ -38,7 +39,7 @@ jobs:
             {
               attachments: [{
                 color: 'danger',
-                text: ':x: Failure\nDaily health check failed for *<https://github.com/metagraph-dev/metagraph-igraph/actions?query=workflow%3A%22Daily+Checkup%22|metagraph-igraph>*'
+                text: ':x: Failure\nDaily health check failed for *<https://github.com/metagraph-dev/metagraph-numba/actions?query=workflow%3A%22Daily+Checkup%22|metagraph-numba>*'
               }]
             }
         env:
