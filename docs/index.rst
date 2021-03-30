@@ -3,7 +3,7 @@ metagraph-numba Documentation
 =============================
 
 metagraph-numba is a plugin for `Metagraph`_ that enables algorithms to be
-just-in-time (JIT) compiled with Numba.  This package currently does not
+just-in-time (JIT) compiled with `Numba`_.  This package currently does not
 include any graph algorithm implementations in Numba, and is mostly used to
 support the `metagraph-mlir`_ plugin.  To learn more about compiler plugins in
 Metagraph, see the `Compiler Plugins`_ section of the Metagraph Plugin Author
@@ -14,6 +14,7 @@ code can be found on `Github`_.
 
 
 .. _Metagraph: https://metagraph.readthedocs.org
+.. _Numba: https://numba.pydata.org
 .. _metagraph-mlir: https://metagraph-mlir.readthedocs.org
 .. _Compiler Plugins: https://metagraph.readthedocs.org/en/plugin_author_guide/compiler_plugins.html
 .. _Apache 2.0 license: https://www.apache.org/licenses/LICENSE-2.0
